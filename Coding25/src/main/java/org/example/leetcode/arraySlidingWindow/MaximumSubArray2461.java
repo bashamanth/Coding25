@@ -10,51 +10,47 @@ public class MaximumSubArray2461 {
 
 
     private static int maxSum(int[] nums, int k) {
+        int maxSum = 0,sum =0;
+        Set<Integer> integerSet = new HashSet<>();
 
-        int maxSum = 0;
+        for (int l = 0, r = 0; r < nums.length; r++) {
 
-        Set<Integer> uniqueElements = new HashSet<>();
-        for (int i = 0; i < k; i++) {
-            if (uniqueElements.contains(nums[i])) {
-                maxSum = 0;
-                break;
-            }
-            else {
-                uniqueElements.add(nums[i]);
-                maxSum += nums[i];
-
-            }
-        }
-
-        for (int i = k; i < nums.length-k ; i++) {
-
-
-        }
-
-
-
-
-
-
-        for (int i = 0; i < nums.length-k; i++) {
-            int sum = 0;
-            if (!uniqueElements.contains(nums[i])) {
-                sum += nums[i];
-                uniqueElements.add(nums[i]);
-
-                if(i<k){
+            if(r-l+1<k){
+                if(integerSet.contains(nums[r])){
 
                 }
+                sum+=nums[r];
+                integerSet.add(nums[r]);
+
             }
 
+            else if(r-l+1>k){
+                integerSet.remove(nums[l]);
+                sum -= nums[l];
+                l++;
+            }
+            else if(r-l+1==k){
+
+                if(!integerSet.contains(nums[r])){
+                    sum += nums[r];
+                }else
+                    continue;
+                maxSum = Math.max(sum, maxSum);
+
+            }
+            integerSet.add(nums[r]);
+
+
         }
+
+
         return maxSum;
     }
 
 
     public static void main(String[] args) {
 
-        int[] nums = new int[]{5, 1, 5, 4, 2, 9, 9, 9};
+        int[] nums = new int[]{ 9, 9, 9};
         int result = MaximumSubArray2461.maxSum(nums, 3);
         System.out.println(result);
     }
