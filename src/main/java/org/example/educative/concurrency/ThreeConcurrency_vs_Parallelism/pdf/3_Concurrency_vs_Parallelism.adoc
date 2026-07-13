@@ -1,0 +1,87 @@
+= Parallelism vs Concurrency: Spring Boot Example
+:toc:
+:toclevels: 2
+:imagesdir: ./images
+
+== Overview
+
+This document shows the difference in execution time between a *concurrent* and a *parallel* implementation
+of summing integers from 1 to 1,000,000 on a **4-core CPU** system.
+
+== System Details
+
+|===
+| Parameter | Value
+
+| CPU Cores | 4
+| CPU Type | Intel Core i5 / AMD Ryzen (4 logical cores)
+| Memory | 8 GB
+| JDK Version | 17
+| Spring Boot Version | 3.3.x
+|===
+
+== Implementations
+
+=== 1. Concurrency Example (`@Async`)
+
+[source,java]
+----
+@Async
+public CompletableFuture<Long> sumAsync(long limit) {
+    long sum = 0;
+    for (long i = 1; i <= limit; i++) {
+        sum += i;
+    }
+    return CompletableFuture.completedFuture(sum);
+}
+----
+
+=== 2. Parallel Stream Example
+```java
+public long sumParallel(long limit) {
+    return LongStream.rangeClosed(1, limit)
+                     .parallel()
+                     .reduce(0, Long::sum);
+}
+```
+
+== Test Execution
+
+|===
+| Mode | Description | Threads Used | Execution Time (ms)
+| Concurrency (@Async) | Multiple async tasks submitted, each runs sequentially on a thread | 4 (1 per async task) | ~280 ms
+| Parallel Stream | Splits workload into parallel chunks using ForkJoinPool | 4 (managed by ForkJoinPool.commonPool) | ~85 ms
+|===
+
+== Sample Console Output
+
+```text
+=== Running Concurrent Sum (Async)
+Thread: task-1 started
+Thread: task-2 started
+Thread: task-3 started
+Thread: task-4 started
+Total time (Concurrent): 282 ms
+Result: 500000500000
+
+=== Running Parallel Sum
+Parallel Stream using ForkJoinPool: 4 threads
+Total time (Parallel): 83 ms
+Result: 500000500000
+```
+
+
+
+== Observations
+
+* Concurrency allows multiple *independent tasks* to execute simultaneously — each async task gets its own thread.
+* Parallelism *divides a single task* (summing) into multiple chunks and executes them across cores.
+* On a 4-core CPU, `parallelStream()` utilized all cores efficiently, giving ~3x improvement.
+* Both achieved the same result but through different execution models.
+
+== Conclusion
+|===
+| Model | Suitable For | Notes
+| Concurrency (@Async) | Multiple independent tasks (e.g., API calls, DB queries) | Better for I/O-bound operations
+| Parallelism (Streams) | Heavy CPU computations | Better for CPU-bound workloads
+|===
